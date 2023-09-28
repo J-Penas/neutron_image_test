@@ -37,6 +37,7 @@
 #include "G4NistManager.hh"
 
 #include "G4Box.hh"
+#include "G4Tubs.hh"
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
 
@@ -120,7 +121,7 @@ void DetectorConstruction::DefineMaterials()
 
   // iron
   G4Isotope* Fe56 = new G4Isotope("Fe56", 26, 56);
-  G4Element* Fe = new G4Element("TS_Iron_Metal", "Fe", 26., ncomponents=1);
+  G4Element* Fe = new G4Element("TS_Iron_Metal", "Fe", ncomponents=1);
   Fe->AddIsotope(Fe56, 100.*perCent);
   G4Material* iron = new G4Material("iron", 7.874*g/cm3, ncomponents=1, kStateSolid, 293*kelvin, 1*atmosphere);
   iron->AddElement(Fe, natoms=1);
@@ -165,6 +166,11 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
   G4PhysicalVolumeStore::GetInstance()->Clean();
   G4LogicalVolumeStore::GetInstance()->Clean();
   G4SolidStore::GetInstance()->Clean();
+
+  // Get materials
+  auto iron = G4Material::GetMaterial("iron");
+  auto polyethylene = G4Material::GetMaterial("polyethylene");
+  auto D2O = G4Material::GetMaterial("HeavyWater");
   
   // world
   G4Box*
@@ -185,12 +191,12 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
   
 
   // target
-  G4double RMinO = 5*cm;	//Outter min radius
-  G4double RMaxO = 10*cm;	//Outter max radius
+  G4double RMinO = 1.25*cm;	//Outter min radius
+  G4double RMaxO = 2.5*cm;	//Outter max radius
   G4double Lz = 15*cm;		//Length
 
   G4double RMinI = 0*cm;	//Inner min radius
-  G4double RMaxI = 5*cm;	//Inner max radius
+  G4double RMaxI = 1.25*cm;	//Inner max radius
 
   G4Tubs* sTargOut = new G4Tubs("shell",
 		  RMinO,RMaxO,Lz/2,0.,2*M_PI);
@@ -199,7 +205,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
 		  iron,
 		  "Shell");
 
-  G4PhysicalVolume* PTargOut = new G4PVPlacement(0,
+  auto PTargOut = new G4PVPlacement(0,
 		  G4ThreeVector(14.*cm,0*cm,0*cm),
 		  LTargOut,
 		  "Shell",
@@ -214,7 +220,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
 		  D2O,
 		  "Core");
 
-  G4PhysicalVolume* PTargIn = new G4PVPlacement(0,
+  auto PTargIn = new G4PVPlacement(0,
 		  G4ThreeVector(0.*cm,0.*cm,0.*cm),
 		  LTargIn,
 		  "Core",
@@ -234,8 +240,8 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
 		  polyethylene,
 		  "Det");
 
-  G4PhysicalVolume* PDet = new G4PVPlacement(0,
-		  G4ThreeVector(18.5*cm,0.*cm,0.*cm),
+  auto PDet = new G4PVPlacement(0,
+		  G4ThreeVector(23.5*cm,0.*cm,0.*cm),
 		  LDet,
 		  "Det",
 		  fLBox,
@@ -246,9 +252,11 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
   G4double B1 = 23*cm;
   G4double B2 = 15*cm;
   G4double Bh = 53*cm;
+  G4double Bp = 7*cm;
+  G4double Bp2 = 38*cm;
 
-  G4RotationMatrix* yRot = new G4RotationMatrix;
-  yRot->rotateY(M_PI/2*rad);
+  G4RotationMatrix* zRot = new G4RotationMatrix;
+  zRot->rotateZ(M_PI/2*rad);
 
   G4Box* sShL = new G4Box("sh_long",
 		  B1/2,B2/2,Bh/2);
@@ -256,6 +264,8 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
 		  B2/2,B2/2,Bh/2);
   G4Box* sShT = new G4Box("sh_top",
 		  B1/2,B1/2,B2/2);
+  G4Box* sShP = new G4Box("sh_pinhole",
+      B2/2,Bp/2,B1/2);
 
   G4LogicalVolume* LShL = new G4LogicalVolume(sShL,
 		  polyethylene,
@@ -266,18 +276,24 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
   G4LogicalVolume* LShT = new G4LogicalVolume(sShT,
 		  polyethylene,
 		  "ShTop");
+  G4LogicalVolume* LShP = new G4LogicalVolume(sShP,
+      polyethylene,
+      "ShPinh");
 
-  G4PhysicalVolume* PShL1 = new G4PVPlacement(0,G4ThreeVector(16.5*cm,19*cm,0.*cm),LShL,"ShLong1",fLBox,false,0);
-  G4PhysicalVolume* PShL2 = new G4PVPlacement(0,G4ThreeVector(16.5*cm,-19*cm,0.*cm),LShL,"ShLong2",fLBox,false,0);
-  G4PhysicalVolume* PShL3 = new G4PVPlacement(yRot,G4ThreeVector(-2.5*cm,15*cm,0.*cm),LShL,"ShLong3",fLBox,false,0);
-  G4PhysicalVolume* PShL4 = new G4PVPlacement(yRot,G4ThreeVector(-2.5*cm,-15*cm,0.*cm),LShL,"ShLong4",fLBox,false,0);
-  G4PhysicalVolume* PShL5 = new G4PVPlacement(yRot,G4ThreeVector(35.5*cm,0.*cm,0.*cm),LShL,"ShLong5",fLBox,false,0);
+  auto PShL1 = new G4PVPlacement(0,G4ThreeVector(16.5*cm,19*cm,0.*cm),LShL,"ShLong1",fLBox,false,0);
+  auto PShL2 = new G4PVPlacement(0,G4ThreeVector(16.5*cm,-19*cm,0.*cm),LShL,"ShLong2",fLBox,false,0);
+  auto PShL3 = new G4PVPlacement(zRot,G4ThreeVector(-2.5*cm,15*cm,0.*cm),LShL,"ShLong3",fLBox,false,0);
+  auto PShL4 = new G4PVPlacement(zRot,G4ThreeVector(-2.5*cm,-15*cm,0.*cm),LShL,"ShLong4",fLBox,false,0);
+  auto PShL5 = new G4PVPlacement(zRot,G4ThreeVector(35.5*cm,0.*cm,0.*cm),LShL,"ShLong5",fLBox,false,0);
 
-  G4PhysicalVolume* PShS1 = new G4PVPlacement(0,G4ThreeVector(35.5*cm,19*cm,0.*cm),LShL,"ShShort1",fLBox,false,0);
-  G4PhysicalVolume* PShS2 = new G4PVPlacement(0,G4ThreeVector(35.5*cm,-19*cm,0.*cm),LShL,"ShShort2",fLBox,false,0);
+  auto PShS1 = new G4PVPlacement(0,G4ThreeVector(35.5*cm,19*cm,0.*cm),LShS,"ShShort1",fLBox,false,0);
+  auto PShS2 = new G4PVPlacement(0,G4ThreeVector(35.5*cm,-19*cm,0.*cm),LShS,"ShShort2",fLBox,false,0);
 
-  G4PhysicalVolume* PShT1 = new G4PVPlacement(0,G4ThreeVector(16.5*cm,0.*cm,(Bh/2-7.5)*cm),LShL,"ShTop1",fLBox,false,0);
-  G4PhysicalVolume* PShT2 = new G4PVPlacement(0,G4ThreeVector(16.5*cm,0.*cm,-(Bh/2-7.5)*cm),LShL,"ShTop2",fLBox,false,0);
+  auto PShT1 = new G4PVPlacement(0,G4ThreeVector(16.5*cm,0.*cm,19*cm),LShT,"ShTop1",fLBox,false,0);     // (Bh/2-7.5)
+  auto PShT2 = new G4PVPlacement(0,G4ThreeVector(16.5*cm,0.*cm,-19*cm),LShT,"ShTop2",fLBox,false,0);    // -(Bh/2-7.5)
+
+  auto PShP1 = new G4PVPlacement(0,G4ThreeVector(-2.5*cm,0.*cm,15*cm),LShP,"ShPinh1",fLBox,false,0);
+  auto PShP2 = new G4PVPlacement(0,G4ThreeVector(-2.5*cm,0.*cm,-15*cm),LShP,"ShPinh2",fLBox,false,0);
 
 
   PrintParameters();
