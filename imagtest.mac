@@ -7,6 +7,8 @@
 /control/verbose 2
 /run/verbose 2
 #
+/testhadr/phys/thermalScattering true
+#
 /run/initialize
 #
 # Use this open statement to create an OpenGL view:
@@ -72,7 +74,7 @@
 /vis/scene/endOfEventAction accumulate
 #
 # Custom visualization:
-/vis/geometry/set/visibility air ! false
+/vis/geometry/set/visibility air ! true
 /vis/geometry/set/visibility ShTop !  false
 /vis/geometry/set/colour Shell ! 100 0 0 100
 /vis/geometry/set/colour Core ! 0 100 0 100
@@ -84,3 +86,36 @@
 #
 # For file-based drivers, use this to create an empty detector view:
 #/vis/viewer/flush
+#
+# Create and configure score
+/score/create/boxMesh mesh1
+/score/mesh/boxSize 0.5 5 5 cm
+/score/mesh/translate/xyz 23.5 0 0 cm
+/score/mesh/nBin 100 100 100
+#
+/score/quantity/passageCellCurrent scurr
+#/score/filter/charged chfilt
+#/score/filter/neutral neufilt
+/score/filter/particle neutronF neutron
+/score/close
+#
+# Create and configure score 2
+/score/create/boxMesh mesh2
+/score/mesh/boxSize 0.5 5 5 cm
+/score/mesh/translate/xyz 23.5 0 0 cm
+/score/mesh/nBin 100 100 100
+#
+/score/quantity/flatSurfaceCurrent sflux
+#/score/filter/charged chfilt
+#/score/filter/neutral neufilt
+/score/filter/particle neutronF neutron
+/score/close
+#
+#
+# Run 100 events
+#/run/beamOn 100
+#
+# Draw score
+#/score/DrawProjection mesh1 scurr
+#
+

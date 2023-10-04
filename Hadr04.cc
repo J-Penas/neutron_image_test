@@ -50,6 +50,8 @@
 
 #include "G4ParticleHPManager.hh"
 
+#include "G4ScoringManager.hh"
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 int main(int argc,char** argv) {
@@ -72,6 +74,9 @@ int main(int argc,char** argv) {
     runManager->SetNumberOfThreads(nThreads);
   }  
   
+  // Activate scoring manager
+  G4ScoringManager::GetScoringManager();
+
   //set mandatory initialization classes
   DetectorConstruction* det= new DetectorConstruction;
   runManager->SetUserInitialization(det);
